@@ -1,0 +1,111 @@
+#!/bin/bash
+
+readarray -d '' array < <(find $1 -name "*.pdf" -print0) # ищем все pdf файлы в папке из аргумента 
+len=${#array[@]} # длина массива
+number=0
+
+for (( i=0; i<$len; i++ ))
+do
+	# выыводим все элементы массива
+	number=$(( $i + 1 ))
+	echo "$number) ${array[$i]}"
+done
+
+echo ""
+echo 'Type "exit" to close program'
+
+while true
+do
+	# получаем номер файла для работы
+	echo "Enter your PDF number:"
+	read pdf_num
+	# проверяем, была ли введена цифра или нет
+	if [[ "$pdf_num" =~ ^[0-9]+$ ]]
+	then
+		# если введённое число меньше длины массива
+		if [[ "$pdf_num" -le "$len" ]]
+			then
+			pdf_num=$(( pdf_num - 1  ))
+			# путь к выбранному файлу
+			file_path="${array[$pdf_num]}"
+			# имя выбранного файла
+			file_name=`echo $file_path | grep -Po '\/[^/]*.pdf' | cut -c 2- | cut -d . -f1`
+			echo "Your file is - $file_path"
+			while true
+			do
+				# меню выбора того, что нужно сделать с файлом
+				echo "What do yo want to do with your text:"
+				echo "1) Read"
+				echo "2) Save"
+				echo "3) Save as"
+				echo "4) Back"
+				read work
+				case $work in
+					"1")
+						# переводим файл в скрытый txt файл и открываем его
+						pdftotext "${array[$pdf_num]}" ".$file_name.txt"
+						echo ""
+						echo "######################################"
+						echo ""
+						cat ".$file_name.txt"
+						echo ""
+						echo "######################################"
+						echo ""
+					;;
+					"2")
+						# переводим файл в скрытый txt файл
+						pdftotext "${array[$pdf_num]}" ".$file_name.txt"
+						# копируем файл в домашний каталог
+						cp ".$file_name.txt" "$HOME" 2> /dev/null
+						# убираем точку из имени файла, делая его видимым
+						cp "$HOME/.$file_name.txt" "$file_name.txt"
+						echo "File succesfuly saved as $file_name.txt in $HOME"
+					;;
+					"3")
+						# переводим файл в скрытый txt файл
+						pdftotext "${array[$pdf_num]}" ".$file_name.txt"
+						echo "Enter new filename:"
+						# считываем новое имя файла
+						read new_name
+						# копируем скрытый файл в домашний каталог
+						cp ".$file_name.txt" "$HOME" 2> /dev/null
+						# меняем имя файла на новое, убирая точку и делая файл видимым
+                                                cp "$HOME/.$file_name.txt" "$new_name.txt"
+                                                echo "File succesfuly saved as $new_name.txt in $HOME"
+					;;
+					"4")
+						# удаляем скрытый txt файл
+						echo "Going back to files list..."
+						rm ".$file_name.txt" 2> /dev/null
+						sleep 1
+						number=0
+						# выводим список файлов из массива
+						for (( i=0; i<$len; i++ ))
+						do
+						        number=$(( $i + 1 ))
+						        echo "$number) ${array[$i]}"
+						done
+						echo ""
+						echo 'Type "exit" to close program'
+						break
+					;;
+					*)
+						echo "No such command!"
+					;;
+				esac
+			done
+		else
+			echo "No such file!"
+		fi
+	else
+		# переводим слово в нижний регистр
+		pdf_num=`echo $pdf_num | sed 's/[A-Z]/\L&/g'`
+		if [[ $pdf_num == "exit" ]]
+		then
+			echo "Exiting from program..."
+			break
+		else
+			echo "No such command"
+		fi
+	fi
+done

@@ -1,4 +1,4 @@
-#bin/bash
+!#bin/bash
 
 
 readarray -d '' FILES_LIST_NUM < <(find $1 -name "*.pdf" 2> /dev/null | cat -n) # ищем все pdf файлы в папке из аргумента и нумерем, для вывода в dialog 
